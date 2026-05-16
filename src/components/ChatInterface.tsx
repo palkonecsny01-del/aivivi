@@ -43,13 +43,24 @@ function pickBestModel(models: typeof ALL_MODELS, preferred?: string | null): st
   return models[0].value;
 }
 
+// ── Task modes ───────────────────────────────────────────────────────────────
+
+const TASK_MODES = [
+  { id: 'quick',   label: 'Gyors',   icon: '⚡', title: 'Rövid, tömör válasz' },
+  { id: 'plan',    label: 'Tervez',  icon: '📋', title: 'Részletes, strukturált terv' },
+  { id: 'analyze', label: 'Elemez',  icon: '🔍', title: 'Mélyreható elemzés' },
+  { id: 'code',    label: 'Kódol',   icon: '💻', title: 'Kód írás, hibakeresés, magyarázat' },
+] as const;
+
+type TaskModeId = typeof TASK_MODES[number]['id'];
+
 // ── Props ────────────────────────────────────────────────────────────────────
 
 interface ChatInterfaceProps {
   thread: Thread | null;
   messages: Message[];
   messagesLoading: boolean;
-  onSendMessage: (content: string, model: string, attachment?: FileAttachment) => Promise<void>;
+  onSendMessage: (content: string, model: string, attachment?: FileAttachment, taskMode?: TaskModeId) => Promise<void>;
   isSending: boolean;
   isThinking: boolean;
   aiAvatarUrl?: string;
@@ -257,12 +268,16 @@ export function ChatInterface({
   const [model, setModel]               = useState('gemini-2.5-flash');
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [showModelMenu, setShowModelMenu] = useState(false);
+  const [menuPos, setMenuPos]           = useState({ top: 0, left: 0 });
+  const [taskMode, setTaskMode]         = useState<TaskModeId>('quick');
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
   const [attachment, setAttachment]     = useState<FileAttachment | null>(null);
   const [attachPreview, setAttachPreview] = useState<string | null>(null);
-  const bottomRef    = useRef<HTMLDivElement>(null);
-  const textareaRef  = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const bottomRef      = useRef<HTMLDivElement>(null);
+  const textareaRef    = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef   = useRef<HTMLInputElement>(null);
+  const modelBtnRef    = useRef<HTMLButtonElement>(null);
+  const modelMenuRef   = useRef<HTMLDivElement>(null);
   const { t } = useI18n();
   const { panelPct, containerRef, onDividerMouseDown } = useDividerResize(45);
 
@@ -277,10 +292,27 @@ export function ChatInterface({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isSending, isThinking]);
 
-  // Auto-close preview panel when thread changes
+  // Auto-close preview panel + clear input when thread changes
   useEffect(() => {
     setActiveArtifact(null);
+    setInput('');
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
   }, [thread?.id]);
+
+  // Close model menu on outside click
+  useEffect(() => {
+    if (!showModelMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        modelMenuRef.current && !modelMenuRef.current.contains(e.target as Node) &&
+        modelBtnRef.current && !modelBtnRef.current.contains(e.target as Node)
+      ) {
+        setShowModelMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showModelMenu]);
 
   // Load available models from admin API keys
   useEffect(() => {
@@ -355,7 +387,7 @@ export function ChatInterface({
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
     const att = attachment;
     clearAttachment();
-    await onSendMessage(finalContent, model, att?.base64 ? att : undefined);
+    await onSendMessage(finalContent, model, att?.base64 ? att : undefined, taskMode);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -514,6 +546,26 @@ export function ChatInterface({
                       accept="image/*,.txt,.md,.csv,.json,.xml,.html,.css,.js,.ts,.py,.pdf"
                       onChange={handleFileChange} />
 
+                    {/* Task mode selector */}
+                    <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-lg bg-zinc-700/40 border border-zinc-700/60">
+                      {TASK_MODES.map(mode => (
+                        <button
+                          key={mode.id}
+                          type="button"
+                          title={mode.title}
+                          onClick={() => setTaskMode(mode.id)}
+                          className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-all ${
+                            taskMode === mode.id
+                              ? 'bg-zinc-600 text-zinc-100 shadow-sm'
+                              : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700/60'
+                          }`}
+                        >
+                          <span>{mode.icon}</span>
+                          <span className="hidden sm:inline">{mode.label}</span>
+                        </button>
+                      ))}
+                    </div>
+
                     {/* Model selector – always visible (admin already set keys) */}
                     {!modelsLoaded ? (
                       <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-zinc-600">
@@ -525,14 +577,25 @@ export function ChatInterface({
                       </div>
                     ) : (
                       <div className="relative z-50">
-                        <button type="button" onClick={() => setShowModelMenu(v => !v)}
+                        <button
+                          ref={modelBtnRef}
+                          type="button"
+                          onClick={() => {
+                            const rect = modelBtnRef.current?.getBoundingClientRect();
+                            if (rect) setMenuPos({ top: window.innerHeight - rect.top + 4, left: rect.left });
+                            setShowModelMenu(v => !v);
+                          }}
                           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 transition-colors">
                           <Cpu size={12} />
                           <span>{currentModel?.label ?? model}</span>
                           <ChevronDown size={11} />
                         </button>
                         {showModelMenu && (
-                          <div className="fixed bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-y-auto z-50 w-72 max-h-96">
+                          <div
+                            ref={modelMenuRef}
+                            className="fixed bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-y-auto z-[9999] w-72 max-h-96"
+                            style={{ bottom: menuPos.top, left: menuPos.left }}
+                          >
                             <div className="p-1">
                               {availableModels.map(m => (
                                 <button key={m.value} type="button"

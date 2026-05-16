@@ -420,10 +420,8 @@ export function Sidebar({
       {/* Brand header */}
       <div className="flex items-center justify-between px-4 py-3.5 border-b border-zinc-800/60">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-            <Bot size={12} className="text-white" />
-          </div>
-          <span className="text-sm font-semibold text-zinc-100">PlanLab</span>
+          <img src="/logo.png" alt="AI Vivien" className="w-6 h-6 rounded-md object-contain" />
+          <span className="text-sm font-semibold text-zinc-100">AI Vivien</span>
         </div>
         <button
           onClick={() => setCollapsed(true)}

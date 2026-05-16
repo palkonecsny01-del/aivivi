@@ -5,18 +5,27 @@ import { AuthPage } from './pages/AuthPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { Sidebar } from './components/Sidebar';
+import type { ConversationTemplate } from './components/Sidebar';
 import { ChatInterface } from './components/ChatInterface';
 import { useThreads } from './hooks/useThreads';
 import { useMessages } from './hooks/useMessages';
 import { useAgents } from './hooks/useAgents';
 import { supabase } from './lib/supabase';
-import { callLLM, callLLMStreaming } from './lib/api';
+import { callLLMStreaming, type FileAttachment } from './lib/api';
 import { loadAdminSystemPrompt } from './lib/apiKeysService';
 import type { Database } from './lib/database.types';
 import { Loader2 } from 'lucide-react';
 
 type Page = 'chat' | 'agents' | 'settings';
 type Agent = Database['public']['Tables']['agents']['Row'];
+
+// Task mode instructions injected into the system prompt
+const TASK_MODE_INSTRUCTIONS: Record<string, string> = {
+  quick:   '',
+  plan:    'Részletes, strukturált, lépésről-lépésre haladó választ adj. Használj számozást és fejezeteket. Minden lépésnél magyarázd el az okát is.',
+  analyze: 'Mélyreható elemzést adj. Vedd figyelembe az összes szempontot, erőket és gyengeségeket egyaránt. Mutass rá rejtett összefüggésekre és lehetőségekre is.',
+  code:    'Programozási feladatnál dolgozol. Írj tiszta, kommentezett, production-ready kódot. Magyarázd el a logikát, mutasd meg a lehetséges hibákat és alternatív megközelítéseket is. Kódot mindig kódblokk formátumban adj.',
+};
 
 function MainApp() {
   const { user, loading } = useAuth();
@@ -25,6 +34,7 @@ function MainApp() {
   const [isSending, setIsSending] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [pendingTemplate, setPendingTemplate] = useState<string | null>(null);
   const [aiAvatarUrl, setAiAvatarUrl] = useState<string>(() =>
     localStorage.getItem('planlabstudio_ai_avatar_url') ?? ''
   );
@@ -83,7 +93,24 @@ function MainApp() {
     if (activeThreadId === id) setActiveThreadId(null);
   }, [deleteThread, activeThreadId]);
 
-  const handleSendMessage = useCallback(async (content: string, model: string) => {
+  const handleNewThreadWithTemplate = useCallback(async (template: ConversationTemplate) => {
+    if (!user) return;
+    const googleKey = localStorage.getItem('planlabstudio_key_google');
+    const openaiKey = localStorage.getItem('planlabstudio_key_openai');
+    const anthropicKey = localStorage.getItem('planlabstudio_key_anthropic');
+    const defaultModel = googleKey ? 'gemini-2.5-flash'
+      : openaiKey ? 'gpt-4o'
+      : anthropicKey ? 'claude-3-5-sonnet-20241022'
+      : 'gemini-2.5-flash';
+    const thread = await createThread(template.title, defaultModel);
+    if (thread) {
+      setActiveThreadId(thread.id);
+      setActivePage('chat');
+      setPendingTemplate(template.prompt);
+    }
+  }, [user, createThread]);
+
+  const handleSendMessage = useCallback(async (content: string, model: string, attachment?: FileAttachment, taskMode?: string) => {
     if (!user) return;
 
     let threadId = activeThreadId;
@@ -113,8 +140,10 @@ function MainApp() {
 
     // Load and inject global admin system prompt
     const adminSystemPrompt = await loadAdminSystemPrompt();
-    if (adminSystemPrompt) {
-      allMessages.unshift({ role: 'system', content: adminSystemPrompt });
+    const taskInstruction = taskMode ? (TASK_MODE_INSTRUCTIONS[taskMode] ?? '') : '';
+    const fullSystemPrompt = [adminSystemPrompt, taskInstruction].filter(Boolean).join('\n\n');
+    if (fullSystemPrompt) {
+      allMessages.unshift({ role: 'system', content: fullSystemPrompt });
     }
 
     // Also check for agent-specific system prompt (agent takes precedence if both exist)
@@ -148,7 +177,7 @@ function MainApp() {
           }
           fullResponse += chunk;
           appendToStreamingMessage(chunk);
-        });
+        }, attachment);
 
         // 3. Remove the local placeholder
         removeStreamingMessage();
@@ -170,7 +199,7 @@ function MainApp() {
     } else {
       const demoResponses = [
         `I received your message: "${content}"\n\nTo enable real AI responses, please add your API key in **Settings > API Keys**.`,
-        `Thank you! This is PlanLabStudio — your AI workspace.\n\nConfigure your API keys in Settings to unlock real AI capabilities.`,
+        `Thank you! This is AI Vivien — your AI workspace.\n\nConfigure your API keys in Settings to unlock real AI capabilities.`,
         `I'm ready to help! Add your API key in **Settings > API Keys** to start using real AI models.`,
       ];
       const reply = demoResponses[Math.floor(Math.random() * demoResponses.length)];
@@ -206,6 +235,7 @@ function MainApp() {
         activeThreadId={activeThreadId}
         onSelectThread={handleSelectThread}
         onNewThread={() => handleNewThread()}
+        onNewThreadWithTemplate={handleNewThreadWithTemplate}
         onDeleteThread={handleDeleteThread}
         onRenameThread={updateThreadTitle}
         activePage={activePage}
@@ -223,6 +253,9 @@ function MainApp() {
             isSending={isSending}
             isThinking={isThinking}
             aiAvatarUrl={aiAvatarUrl}
+            isAdmin={isAdmin}
+            pendingTemplate={pendingTemplate}
+            onTemplateSent={() => setPendingTemplate(null)}
           />
         )}
         {activePage === 'agents' && (

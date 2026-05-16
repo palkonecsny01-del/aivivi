@@ -48,7 +48,7 @@ const en: Translations = {
       createAccount: 'Create Account',
     },
     Intro: {
-      description: 'Welcome to PlanLabStudio. Sign in to experience our AI-powered conversational tools.',
+      description: 'Welcome to AI Vivien. Sign in to experience our AI-powered conversational tools.',
     },
   },
   Chat: {
@@ -223,13 +223,13 @@ const en: Translations = {
       generateCode: 'Generate code for a feature',
       reviewText: 'Review and improve my text',
     },
-    messagePlaceholder: 'Message PlanLabStudio... (Enter to send, Shift+Enter for newline)',
-    disclaimer: 'PlanLabStudio can make mistakes. Verify important information.',
+    messagePlaceholder: 'Message AI Vivien... (Enter to send, Shift+Enter for newline)',
+    disclaimer: 'AI Vivien can make mistakes. Verify important information.',
     copy: 'Copy',
     copied: 'Copied',
   },
   AuthPage: {
-    brandName: 'PlanLabStudio',
+    brandName: 'AI Vivien',
     headline1: 'Your AI workspace,',
     headline2: 'reimagined.',
     subline: 'Build custom agents, run intelligent conversations, and orchestrate powerful workflows — all in one place.',

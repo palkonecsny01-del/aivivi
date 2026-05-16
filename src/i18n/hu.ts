@@ -46,7 +46,7 @@ const hu = {
       createAccount: 'Fiók létrehozása',
     },
     Intro: {
-      description: 'Üdvözöljük a PlanLabStudióban. Jelentkezzen be, hogy megtapasztalhassa AI-alapú beszélgetős eszközeinket.',
+      description: 'Üdvözöljük a AI Vivienban. Jelentkezzen be, hogy megtapasztalhassa AI-alapú beszélgetős eszközeinket.',
     },
   },
   Chat: {
@@ -221,13 +221,13 @@ const hu = {
       generateCode: 'Kód generálása egy funkcióhoz',
       reviewText: 'Szöveg áttekintése és javítása',
     },
-    messagePlaceholder: 'Üzenet a PlanLabStudiónak... (Enter a küldéshez, Shift+Enter új sorhoz)',
-    disclaimer: 'A PlanLabStudio hibázhat. Ellenőrizze a fontos információkat.',
+    messagePlaceholder: 'Üzenet az AI Viviennek... (Enter a küldéshez, Shift+Enter új sorhoz)',
+    disclaimer: 'Az AI Vivien hibázhat. Ellenőrizze a fontos információkat.',
     copy: 'Másolás',
     copied: 'Másolva',
   },
   AuthPage: {
-    brandName: 'PlanLabStudio',
+    brandName: 'AI Vivien',
     headline1: 'Az AI munkaterülete,',
     headline2: 'újragondolva.',
     subline: 'Építsen egyedi ügynököket, futtasson intelligens beszélgetéseket és irányítson hatékony munkafolyamatokat — mindez egy helyen.',

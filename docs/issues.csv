@@ -1,0 +1,15 @@
+﻿Status,Title,Description,Priority,Sprint,Type,Acceptance Criteria
+🟥 Todo,PDF export javítása,"Csak a generált AI‑válasz kerüljön a PDF-be, ne a teljes chat.",High,Sprint 0,Bug,"PDF csak a végső választ tartalmazza, formázva."
+🟥 Todo,Modellválasztó UI hiba javítása,A modellválasztó lenyíló eltűnik → stabilizálni kell.,High,Sprint 0,Bug,"Modellválasztó mindig látható, nem csúszik el."
+🟥 Todo,Tiltott modellek kiszűrése,gemini-3.1-pro-preview és gemini-3-pro-image-preview eltávolítása.,High,Sprint 0,Task,Modellek nem jelennek meg UI-ban és backendben sem.
+🟧 In Progress,Preview panel automatikus bezárása,Chatváltáskor a preview panel záródjon.,Medium,Sprint 1,UX,Chatváltás → preview eltűnik.
+🟥 Todo,Session state tisztítása,Chatváltáskor törlődjön minden ideiglenes preview/prompt state.,Medium,Sprint 1,UX,Nincs leftover preview vagy prompt state.
+🟥 Todo,System Prompt működésének javítása,Settings → AI Rendszerüzenet legyen globálisan érvényes.,High,Sprint 2,Core,Minden modellhívás tartalmazza a user system promptját.
+🟥 Todo,Prompt pipeline refaktor,Egységes system/dev/user/context prompt pipeline.,High,Sprint 2,Refactor,Prompt stack determinisztikus és dokumentált.
+🟧 In Progress,Anthropics Skills integráció,Skills engine integrálása a backendbe.,High,Sprint 3,Feature,"Skills modul működik, válaszokban érvényesül."
+🟥 Todo,Skills UI konfiguráció,"Settings → skill engedélyezés/tiltás, prioritások.",Medium,Sprint 3,Feature,UI-ból állítható skill lista.
+🟩 Done,Prompt pipeline dokumentáció,Prompt rétegek dokumentálása.,Low,Sprint 4,Docs,README + docs/prompt-pipeline.md elkészült.
+🟥 Todo,Unit tesztek,"PDF export, modellválasztó, system prompt injection tesztelése.",Medium,Sprint 4,Test,Tesztek futnak CI-ben.
+🟥 Todo,E2E tesztek,"Chatváltás, preview panel viselkedés.",Medium,Sprint 4,Test,Playwright/Cypress tesztek zöldek.
+🟦 Backlog,Export modul bővítése,Markdown/HTML export opciók.,Low,Sprint 5,Feature,Új export formátumok működnek.
+🟦 Backlog,Prompt fejlesztő mód továbbfejlesztése,"Prompt history, diff nézet, verziózás.",Low,Sprint 5,Feature,Prompt history UI működik.
