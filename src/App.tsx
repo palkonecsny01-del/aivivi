@@ -11,6 +11,7 @@ import { useMessages } from './hooks/useMessages';
 import { useAgents } from './hooks/useAgents';
 import { supabase } from './lib/supabase';
 import { callLLM, callLLMStreaming } from './lib/api';
+import { loadAdminSystemPrompt } from './lib/apiKeysService';
 import type { Database } from './lib/database.types';
 import { Loader2 } from 'lucide-react';
 
@@ -110,9 +111,18 @@ function MainApp() {
       { role: 'user' as const, content },
     ];
 
+    // Load and inject global admin system prompt
+    const adminSystemPrompt = await loadAdminSystemPrompt();
+    if (adminSystemPrompt) {
+      allMessages.unshift({ role: 'system', content: adminSystemPrompt });
+    }
+
+    // Also check for agent-specific system prompt (agent takes precedence if both exist)
     const thread = threads.find(t => t.id === threadId);
     const agent = thread?.agent_id ? agents.find(a => a.id === thread.agent_id) : null;
     if (agent?.system_prompt) {
+      // Remove global prompt if agent has its own
+      allMessages.splice(0, 1);
       allMessages.unshift({ role: 'system', content: agent.system_prompt });
     }
 
