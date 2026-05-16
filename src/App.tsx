@@ -16,7 +16,11 @@ import { loadAdminSystemPrompt } from './lib/apiKeysService';
 import type { Database } from './lib/database.types';
 import { Loader2 } from 'lucide-react';
 
-type Page = 'chat' | 'agents' | 'settings';
+// ÚJ IMPORTOK A CSOMAGVÁLTÁSHOZ ÉS A TOKENEKHEZ
+import { TokenProvider } from './contexts/TokenContext';
+import { PricingPage } from './pages/PricingPage';
+
+type Page = 'chat' | 'agents' | 'settings' | 'pricing'; // Kiegészítve 'pricing'-al
 type Agent = Database['public']['Tables']['agents']['Row'];
 
 // Task mode instructions injected into the system prompt
@@ -277,6 +281,10 @@ function MainApp() {
             isAdmin={isAdmin}
           />
         )}
+        {/* ÚJ ÁRAZÁSI/CSOMAGVÁLTÓ OLDAL INTEGRÁCIÓJA */}
+        {activePage === 'pricing' && (
+          <PricingPage />
+        )}
       </main>
     </div>
   );
@@ -286,7 +294,10 @@ function App() {
   return (
     <I18nProvider>
       <AuthProvider>
-        <MainApp />
+        {/* KÖRNYEZET BEÉPÍTÉSE, HOGY A TOKENMETER NE HALJON MEG */}
+        <TokenProvider>
+          <MainApp />
+        </TokenProvider>
       </AuthProvider>
     </I18nProvider>
   );
