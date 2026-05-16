@@ -21,7 +21,7 @@ export function VivienLogo({ collapsed = false }: VivienLogoProps) {
           AI <span className="text-blue-500">Vivien</span>
         </span>
         <span className="text-[9px] text-zinc-500 font-medium tracking-wide uppercase mt-0.5">
-          Munkaterület
+          PlanLabStudio
         </span>
       </div>
     </div>
