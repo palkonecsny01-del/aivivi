@@ -20,7 +20,7 @@ export interface ConversationTemplate {
   color: string;
 }
 
-const TEMPLATES: ConversationTemplate[] = [
+export const TEMPLATES: ConversationTemplate[] = [
   {
     id: 'business-plan',
     icon: <Briefcase size={14} />,

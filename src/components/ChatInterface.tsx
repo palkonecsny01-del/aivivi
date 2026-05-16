@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
 import {
-  Send, Bot, User, Sparkles, Copy, Check,
+  Send, Bot, User, Copy, Check,
   ChevronDown, Cpu, Loader2, Code2, Paperclip, Download, X,
   FileText, Image as ImageIcon, AlertCircle
 } from 'lucide-react';
@@ -10,6 +10,7 @@ import type { Database } from '../lib/database.types';
 import { ArtifactPanel, extractArtifact } from './ArtifactPanel';
 import type { Artifact } from './ArtifactPanel';
 import type { FileAttachment } from '../lib/api';
+import { TEMPLATES } from './Sidebar';
 
 type Message = Database['public']['Tables']['messages']['Row'];
 type Thread  = Database['public']['Tables']['threads']['Row'];
@@ -138,6 +139,18 @@ function renderMarkdown(content: string, isStreaming: boolean, onArtifactClick?:
   });
 }
 
+// ── File attachment parser ─────────────────────────────────────────────────────
+// Detects the "**Csatolt fájl: name**\n```\ncontent\n```\n\ntext" pattern in user messages
+// and returns structured data so we can render a collapsible chip instead of the raw markdown.
+
+const ATTACH_REGEX = /^\*\*Csatolt fájl: (.+?)\*\*\n```[^\n]*\n([\s\S]*?)\n```\n\n?([\s\S]*)$/;
+
+function parseFileAttachment(content: string): { filename: string; fileContent: string; userText: string } | null {
+  const match = content.match(ATTACH_REGEX);
+  if (!match) return null;
+  return { filename: match[1], fileContent: match[2], userText: match[3] };
+}
+
 // ── Message bubble ─────────────────────────────────────────────────────────────
 
 function MessageBubble({
@@ -146,6 +159,7 @@ function MessageBubble({
   message: Message; isStreaming?: boolean; onArtifactClick?: (a: Artifact) => void; aiAvatarUrl?: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const [fileExpanded, setFileExpanded] = useState(false);
   const isUser = message.role === 'user';
 
   const copy = async () => {
@@ -154,8 +168,42 @@ function MessageBubble({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Try to detect an attachment block in user messages
+  const parsedAttachment = isUser ? parseFileAttachment(message.content) : null;
+
   const renderContent = (content: string) => {
     if (isUser) {
+      // If this message has an embedded file, show compact chip + user text
+      if (parsedAttachment) {
+        return (
+          <div className="flex flex-col gap-2">
+            {/* File chip */}
+            <button
+              onClick={() => setFileExpanded(v => !v)}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-500/20 border border-blue-400/30 text-blue-200 text-xs font-medium hover:bg-blue-500/30 transition-colors w-fit"
+            >
+              <FileText size={12} className="shrink-0" />
+              <span className="truncate max-w-[180px]">{parsedAttachment.filename}</span>
+              <ChevronDown size={11} className={`shrink-0 transition-transform ${fileExpanded ? 'rotate-180' : ''}`} />
+            </button>
+            {/* Expandable file content */}
+            {fileExpanded && (
+              <pre className="text-[11px] bg-zinc-900/70 border border-zinc-700/60 rounded-lg p-3 overflow-x-auto max-h-48 whitespace-pre-wrap break-words text-zinc-300 font-mono leading-relaxed">
+                {parsedAttachment.fileContent}
+              </pre>
+            )}
+            {/* User's own message text */}
+            {parsedAttachment.userText && (
+              <span>
+                {parsedAttachment.userText.split('\n').map((line, i, arr) => (
+                  <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+                ))}
+              </span>
+            )}
+          </div>
+        );
+      }
+      // Normal user message
       return content.split('\n').map((line, i, arr) => (
         <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
       ));
@@ -465,14 +513,60 @@ export function ChatInterface({
           <div className="flex-1 overflow-y-auto px-4 py-6 no-scrollbar">
             <div className="max-w-3xl mx-auto">
               {messages.length === 0 && !isSending ? (
-                <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center mb-5 shadow-lg shadow-blue-500/20">
-                    <Sparkles size={28} className="text-white" />
+                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-2">
+                  {/* Logo */}
+                  <div className="w-16 h-16 rounded-2xl bg-zinc-800 border border-zinc-700/60 flex items-center justify-center mb-5 shadow-lg overflow-hidden">
+                    <img src="/logo.png" alt="AI Vivien" className="w-12 h-12 object-contain" />
                   </div>
                   <h2 className="text-xl font-semibold text-zinc-100 mb-2">
                     {thread ? t.ChatInterface.startTheConversation : t.ChatInterface.whatCanIHelpWith}
                   </h2>
-                  <p className="text-sm text-zinc-500 mb-8 max-w-sm">{t.ChatInterface.askMeAnything}</p>
+                  <p className="text-sm text-zinc-500 mb-6 max-w-sm">{t.ChatInterface.askMeAnything}</p>
+
+                  {/* Task mode selector */}
+                  <div className="flex flex-wrap justify-center gap-2 mb-7">
+                    {TASK_MODES.map(mode => (
+                      <button
+                        key={mode.id}
+                        title={mode.title}
+                        onClick={() => setTaskMode(mode.id)}
+                        className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium border transition-all ${
+                          taskMode === mode.id
+                            ? 'bg-zinc-700 border-zinc-500 text-zinc-100 shadow-sm'
+                            : 'bg-zinc-800/60 border-zinc-700/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 hover:border-zinc-600'
+                        }`}
+                      >
+                        <span>{mode.icon}</span>
+                        <span>{mode.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Templates */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full max-w-2xl mb-5">
+                    {TEMPLATES.map(tpl => (
+                      <button
+                        key={tpl.id}
+                        onClick={() => {
+                          if (thread) {
+                            onSendMessage(tpl.prompt, model, undefined, taskMode);
+                          } else {
+                            setInput(tpl.prompt);
+                            textareaRef.current?.focus();
+                          }
+                        }}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-600 transition-all text-left group"
+                      >
+                        <span className={`p-1.5 rounded-md border shrink-0 ${tpl.color}`}>{tpl.icon}</span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-zinc-300 group-hover:text-white truncate">{tpl.title}</p>
+                          <p className="text-[10px] text-zinc-500 truncate mt-0.5">{tpl.description}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Quick suggestions */}
                   <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
                     {suggestions.map(s => (
                       <button key={s} onClick={() => { setInput(s); textareaRef.current?.focus(); }}

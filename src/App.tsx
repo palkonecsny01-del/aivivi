@@ -141,7 +141,9 @@ function MainApp() {
     // Load and inject global admin system prompt
     const adminSystemPrompt = await loadAdminSystemPrompt();
     const taskInstruction = taskMode ? (TASK_MODE_INSTRUCTIONS[taskMode] ?? '') : '';
-    const fullSystemPrompt = [adminSystemPrompt, taskInstruction].filter(Boolean).join('\n\n');
+    // Developer info: AI only mentions it when explicitly asked
+    const developerInfo = 'FEJLESZTŐI INFORMÁCIÓ (CSAK AKKOR OSZD MEG, HA VALAKI KIFEJEZETTEN KÉRDEZI): A rendszert Paul Martinez fejlesztette. Ha rákérdeznek a fejlesztőre, a készítőre vagy a rendszer hátterére, akkor és csak akkor említheted meg ezt. Weboldala: www.paulmartinez.hu – ezt mindig sima szövegként írd, SOHA ne kattintható linkként, ne markdown formátumban. Ha senki nem kérdez a fejlesztőről, ezt az információt ne hozd szóba.';
+    const fullSystemPrompt = [adminSystemPrompt, taskInstruction, developerInfo].filter(Boolean).join('\n\n');
     if (fullSystemPrompt) {
       allMessages.unshift({ role: 'system', content: fullSystemPrompt });
     }
