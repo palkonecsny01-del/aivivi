@@ -5,6 +5,8 @@ import {
   Briefcase, BarChart2, TrendingUp, Search as SearchIcon, Megaphone, PieChart
 } from 'lucide-react';
 import { useI18n } from '../i18n';
+import { VivienLogo } from './VivienLogo';
+import { TokenMeter } from './TokenMeter';
 import type { Database } from '../lib/database.types';
 
 type Thread = Database['public']['Tables']['threads']['Row'];
@@ -27,21 +29,7 @@ export const TEMPLATES: ConversationTemplate[] = [
     title: 'Üzleti terv',
     description: 'Teljes körű üzleti terv készítése',
     color: 'text-blue-400 bg-blue-400/10 border-blue-500/20',
-    prompt: `Segíts egy részletes üzleti tervet elkészíteni! Az üzleti tervnek a következőket kell tartalmaznia:
-
-📋 **Struktúra:**
-1. Üzleti összefoglaló (Executive Summary)
-2. Vállalkozás bemutatása és misszió
-3. Termék/Szolgáltatás részletes leírása
-4. Piacelemzés (TAM, SAM, SOM)
-5. Versenytárs-elemzés
-6. Marketing és értékesítési stratégia
-7. Operatív terv
-8. Pénzügyi terv (3 évre: bevételi előrejelzés, break-even, cash-flow)
-9. Kockázatelemzés (SWOT)
-10. Megvalósítási ütemterv
-
-Kérlek, kezdd azzal, hogy felteszed a legfontosabb kérdéseket: mi a vállalkozás ötlete, milyen iparágban működünk, ki a célközönség, és mekkora tőkével tervezünk indulni?`,
+    prompt: `Segíts egy részletes üzleti tervet elkészíteni! Az üzleti tervnek a következőket kell tartalmaznia:\n\n📋 **Struktúra:**\n1. Üzleti összefoglaló (Executive Summary)\n2. Vállalkozás bemutatása és misszió\n3. Termék/Szolgáltatás részletes leírása\n4. Piacelemzés (TAM, SAM, SOM)\n5. Versenytárs-elemzés\n6. Marketing és értékesítési stratégia\n7. Operatív terv\n8. Pénzügyi terv (3 évre: bevételi előrejelzés, break-even, cash-flow)\n9. Kockázatelemzés (SWOT)\n10. Megvalósítási ütemterv\n\nKérlek, kezdd azzal, hogy felteszed a legfontosabb kérdéseket: mi a vállalkozás ötlete, milyen iparágban működünk, ki a célközönség, és mekkora tőkével tervezünk indulni?`,
   },
   {
     id: 'marketing-plan',
@@ -49,39 +37,7 @@ Kérlek, kezdd azzal, hogy felteszed a legfontosabb kérdéseket: mi a vállalko
     title: 'Marketing terv',
     description: 'Pszichológia-alapú, profi marketing stratégia',
     color: 'text-pink-400 bg-pink-400/10 border-pink-500/20',
-    prompt: `Dolgozz ki egy professzionális, pszichológia-alapú marketing tervet! A tervnek a legmodernebb marketingpszichológiai elveket kell alkalmaznia.
-
-🧠 **Pszichológiai alapok, amiket használj:**
-- Social Proof (társadalmi bizonyíték)
-- Scarcity & Urgency (szűkösség és sürgősség)
-- FOMO (Fear of Missing Out)
-- Anchoring (horgonyozás)
-- Loss Aversion (veszteségkerülés)
-- Reciprocity (viszonosság)
-- Authority (tekintély)
-
-📱 **Social Media stratégia (platform-specifikus):**
-- Instagram: Reels, Stories, Carousel, UGC
-- TikTok: Virális formulák, trending hangok, hook-ok
-- Facebook: Community building, retargeting, lookalike audiences
-- LinkedIn: B2B pozicionálás, thought leadership
-
-✍️ **Copywriting keretrendszerek:**
-- AIDA (Attention, Interest, Desire, Action)
-- PAS (Problem, Agitate, Solution)
-- StoryBrand (7 lépéses narratíva)
-- 4U formula (Urgent, Unique, Ultra-specific, Useful)
-
-📊 **Tartalmazza:**
-- Buyer persona mély-analízis (pszichográfia, fájdalompontok, motivációk)
-- Content calendar (30 napos terv)
-- Konverziós tölcsér (TOFU, MOFU, BOFU)
-- KPI-ok és mérési módszerek
-- Influencer marketing stratégia
-- Email marketing szekvencia
-- Hirdetési stratégia (Meta Ads, Google Ads)
-
-Kezdd azzal, hogy részletesen feltárod a márkát, a terméket/szolgáltatást és a célközönséget!`,
+    prompt: `Dolgozz ki egy professzionális, pszichológia-alapú marketing tervet! A tervnek a legmodernebb marketingpszichológiai elveket kell alkalmaznia.\n\n🧠 **Pszichológiai alapok, amiket használj:**\n- Social Proof (társadalmi bizonyíték)\n- Scarcity & Urgency (szűkösség és sürgősség)\n- FOMO (Fear of Missing Out)\n- Anchoring (horgonyozás)\n- Loss Aversion (veszteségkerülés)\n- Reciprocity (viszonosság)\n- Authority (tekintély)\n\n📱 **Social Media stratégia (platform-specifikus):**\n- Instagram: Reels, Stories, Carousel, UGC\n- TikTok: Virális formulák, trending hangok, hook-ok\n- Facebook: Community building, retargeting, lookalike audiences\n- LinkedIn: B2B pozicionálás, thought leadership\n\nKezdd azzal, hogy részletesen feltárod a márkát, a terméket/szolgáltatást és a célközönséget!`,
   },
   {
     id: 'market-research',
@@ -89,36 +45,7 @@ Kezdd azzal, hogy részletesen feltárod a márkát, a terméket/szolgáltatást
     title: 'Piackutatás',
     description: 'Mélyreható piac- és fogyasztóelemzés',
     color: 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20',
-    prompt: `Végezz egy átfogó piackutatást! A kutatásnak valódi üzleti döntéseket kell támogatnia.
-
-🔍 **Kutatási területek:**
-
-1. **Piacméret és szegmensek**
-   - TAM / SAM / SOM kalkuláció
-   - Növekedési trendek és CAGR
-   - Szegmentációs lehetőségek
-
-2. **Fogyasztói analízis**
-   - Demográfiai és pszichográfiai profil
-   - Vásárlási döntési folyamat
-   - Fájdalompontok és nem teljesített igények
-   - Willingness-to-pay kutatás
-
-3. **Versenykörnyezet**
-   - Direkt és indirekt versenytársak
-   - Piaci részesedés becslés
-   - Versenyelőnyök és differenciáció
-
-4. **Trendek és jövőkép**
-   - Technológiai változások hatása
-   - Szabályozói környezet
-   - Fogyasztói magatartás változásai
-
-5. **Belépési lehetőségek**
-   - Piaci rések azonosítása
-   - Potenciális partneri lehetőségek
-
-Kérdezz rá az iparágra, a vállalkozás céljára és a kutatás fókuszára!`,
+    prompt: `Végezz egy átfogó piackutatást! A kutatásnak valódi üzleti döntéseket kell támogatnia.\n\n🔍 **Kutatási területek:**\n\n1. **Piacméret és szegmensek** - TAM / SAM / SOM kalkuláció\n2. **Fogyasztói analízis** - Demográfiai és pszichográfiai profil\n3. **Versenykörnyezet** - Direkt és indirekt versenytársak\n4. **Trendek és jövőkép** - Technológiai változások hatása\n5. **Belépési lehetőségek** - Piaci rések azonosítása\n\nKérdezz rá az iparágra, a vállalkozás céljára és a kutatás fókuszára!`,
   },
   {
     id: 'competitor-analysis',
@@ -126,36 +53,7 @@ Kérdezz rá az iparágra, a vállalkozás céljára és a kutatás fókuszára!
     title: 'Versenytárs elemzés',
     description: 'SWOT + kompetitív intelligencia',
     color: 'text-orange-400 bg-orange-400/10 border-orange-500/20',
-    prompt: `Végezz egy részletes versenytárs-elemzést! A cél a piaci pozicionálás és a versenyelőnyök azonosítása.
-
-⚔️ **Elemzési keretrendszer:**
-
-1. **Versenytársak azonosítása**
-   - Direkt versenytársak (ugyanaz a termék/piac)
-   - Indirekt versenytársak (helyettesítő termékek)
-   - Potenciális jövőbeli belépők
-
-2. **Minden versenytársnál elemezd:**
-   - Termék/szolgáltatás portfólió és árazás
-   - Értékajánlat és pozicionálás
-   - Marketing és kommunikáció (hangnem, csatornák, üzenetek)
-   - Online jelenlét (website, social media, SEO)
-   - Ügyfélbázis és célcsoport
-   - Erősségek és gyengeségek
-   - Vásárlói vélemények elemzése
-
-3. **SWOT mátrix (saját vállalkozás)**
-   - Strengths: belső erősségek
-   - Weaknesses: belső gyengeségek
-   - Opportunities: külső lehetőségek
-   - Threats: külső veszélyek
-
-4. **Stratégiai következtetések**
-   - Blue Ocean lehetőségek
-   - Differenciációs pontok
-   - Competitive Advantage sources
-
-Mondd el az iparágat és a saját vállalkozásodat, hogy pontos elemzést adhassak!`,
+    prompt: `Végezz egy részletes versenytárs-elemzést! A cél a piaci pozicionálás és a versenyelőnyök azonosítása.\n\n⚔️ **Elemzési keretrendszer:**\n\n1. Versenytársak azonosítása (direkt + indirekt)\n2. Minden versenytársnál: termék, árazás, marketing, online jelenlét\n3. SWOT mátrix a saját vállalkozáshoz\n4. Stratégiai következtetések és Blue Ocean lehetőségek\n\nMondd el az iparágat és a saját vállalkozásodat!`,
   },
   {
     id: 'social-media-strategy',
@@ -163,47 +61,7 @@ Mondd el az iparágat és a saját vállalkozásodat, hogy pontos elemzést adha
     title: 'Social Media stratégia',
     description: 'Virális tartalom, engagement, growth',
     color: 'text-purple-400 bg-purple-400/10 border-purple-500/20',
-    prompt: `Készíts egy komplett, pszichológia-alapú Social Media stratégiát, ami valódi eredményeket hoz!
-
-🚀 **A stratégia elemei:**
-
-**1. Márkapozicionálás**
-- Brand voice és személyiség definiálása
-- Visual identity (szín, tipográfia, képstílus)
-- Unique Value Proposition a social mediában
-
-**2. Platform-specifikus megközelítés:**
-
-📸 **Instagram**
-- Reels stratégia (hook, content, CTA formula)
-- Stories taktikák (polls, quizzes, countdown)
-- Carousel posztok (edukáció + engagement)
-- UGC (User Generated Content) ösztönzése
-
-🎵 **TikTok**
-- Virális hook formulák (első 3 másodperc)
-- Trending hangok és effektek felhasználása
-- Duet és Stitch lehetőségek
-- TikTok SEO (kulcsszavak a szövegben)
-
-👔 **LinkedIn (B2B)**
-- Thought leadership tartalom
-- Személyes márkaépítés
-- Dokumentum posztok és karousellek
-
-👥 **Facebook**
-- Community (csoport) építés
-- Facebook Ads remarketing
-- Live videó stratégia
-
-**3. Content pillars (3-5 tartalom-pillér)**
-**4. 30 napos tartalomnaptár**
-**5. Engagement taktikák** (komment stratégia, DM funnel)
-**6. Influencer / Creator együttműködések**
-**7. Fizetett hirdetés + organikus synergia**
-**8. Mérőszámok és KPI-ok**
-
-Kérdezz rá a márkára, a célközönségre és a jelenlegi social media helyzetre!`,
+    prompt: `Készíts egy komplett, pszichológia-alapú Social Media stratégiát!\n\n🚀 **A stratégia elemei:**\n- Márkapozicionálás és brand voice\n- Platform-specifikus megközelítés (Instagram, TikTok, LinkedIn, Facebook)\n- Content pillars (3-5 tartalom-pillér)\n- 30 napos tartalomnaptár\n- Engagement taktikák és KPI-ok\n\nKérdezz rá a márkára, a célközönségre és a jelenlegi social media helyzetre!`,
   },
   {
     id: 'financial-analysis',
@@ -211,38 +69,7 @@ Kérdezz rá a márkára, a célközönségre és a jelenlegi social media helyz
     title: 'Pénzügyi elemzés',
     description: 'Cash-flow, P&L, befektetői előrejelzés',
     color: 'text-yellow-400 bg-yellow-400/10 border-yellow-500/20',
-    prompt: `Készíts egy átfogó pénzügyi elemzést és előrejelzést a vállalkozáshoz!
-
-💰 **Elemzési területek:**
-
-1. **Bevételi modell**
-   - Bevételi streams azonosítása
-   - Árazási stratégia (freemium, subscription, one-time, usage-based)
-   - Átlagos tranzakciós érték (ATV) és Customer Lifetime Value (CLV)
-
-2. **Költségstruktúra**
-   - Fix vs. változó költségek
-   - COGS (Cost of Goods Sold)
-   - Operating Expenses (OPEX)
-   - Customer Acquisition Cost (CAC)
-
-3. **Pénzügyi kimutatások (3 éves előrejelzés)**
-   - Profit & Loss (P&L) kimutatás
-   - Cash-flow kimutatás
-   - Break-even analízis
-   - Unit Economics
-
-4. **Tőkeszükséglet és befektetői anyag**
-   - Runway kalkuláció
-   - Seed/Series A célok
-   - ROI és megtérülési kalkuláció
-   - Valuáció módszerek
-
-5. **Kockázati forgatókönyvek**
-   - Best case / Base case / Worst case
-   - Érzékenységvizsgálat
-
-Kérdezz rá a jelenlegi bevételekre, költségekre és finanszírozási célokra!`,
+    prompt: `Készíts egy átfogó pénzügyi elemzést és előrejelzést!\n\n💰 **Elemzési területek:**\n1. Bevételi modell és árazási stratégia\n2. Költségstruktúra (fix vs. változó, COGS, CAC)\n3. P&L + Cash-flow + Break-even (3 éves előrejelzés)\n4. Tőkeszükséglet és befektetői anyag\n5. Best / Base / Worst case forgatókönyvek\n\nKérdezz rá a jelenlegi bevételekre, költségekre és finanszírozási célokra!`,
   },
 ];
 
@@ -254,8 +81,8 @@ interface SidebarProps {
   onNewThreadWithTemplate: (template: ConversationTemplate) => void;
   onDeleteThread: (id: string) => void;
   onRenameThread: (id: string, title: string) => void;
-  activePage: 'chat' | 'agents' | 'settings';
-  onNavigate: (page: 'chat' | 'agents' | 'settings') => void;
+  activePage: 'chat' | 'agents' | 'settings' | 'pricing';
+  onNavigate: (page: 'chat' | 'agents' | 'settings' | 'pricing') => void;
   userName: string;
 }
 
@@ -271,16 +98,15 @@ export function Sidebar({
   onNavigate,
   userName,
 }: SidebarProps) {
-  const [collapsed, setCollapsed]       = useState(false);
-  const [search, setSearch]             = useState('');
-  const [renamingId, setRenamingId]     = useState<string | null>(null);
-  const [renameValue, setRenameValue]   = useState('');
+  const [collapsed, setCollapsed]         = useState(false);
+  const [search, setSearch]               = useState('');
+  const [renamingId, setRenamingId]       = useState<string | null>(null);
+  const [renameValue, setRenameValue]     = useState('');
   const [hoveredThread, setHoveredThread] = useState<string | null>(null);
   const [showTemplates, setShowTemplates] = useState(false);
   const templateRef = useRef<HTMLDivElement>(null);
   const { t } = useI18n();
 
-  // Close template menu when clicking outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (templateRef.current && !templateRef.current.contains(e.target as Node)) {
@@ -376,6 +202,7 @@ export function Sidebar({
     );
   };
 
+  // ── COLLAPSED STATE ──────────────────────────────────────────────────────────
   if (collapsed) {
     return (
       <div className="w-12 flex flex-col items-center py-3 gap-3 border-r border-zinc-800 bg-zinc-900/50 shrink-0">
@@ -404,25 +231,27 @@ export function Sidebar({
         >
           <Bot size={15} />
         </button>
-        <div className="flex-1" />
-        <button
-          onClick={() => onNavigate('settings')}
-          className={`p-2 rounded-lg transition-colors ${activePage === 'settings' ? 'text-zinc-100 bg-zinc-800' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
-        >
-          <Settings size={15} />
-        </button>
+
+        {/* Token meter (collapsed ring) */}
+        <div className="flex-1 flex flex-col justify-end pb-2 gap-2">
+          <TokenMeter collapsed onUpgrade={() => onNavigate('pricing')} />
+          <button
+            onClick={() => onNavigate('settings')}
+            className={`p-2 rounded-lg transition-colors ${activePage === 'settings' ? 'text-zinc-100 bg-zinc-800' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
+          >
+            <Settings size={15} />
+          </button>
+        </div>
       </div>
     );
   }
 
+  // ── EXPANDED STATE ───────────────────────────────────────────────────────────
   return (
     <div className="w-60 flex flex-col border-r border-zinc-800 bg-zinc-900/50 shrink-0 overflow-hidden">
-      {/* Brand header */}
+      {/* Brand header — VivienLogo */}
       <div className="flex items-center justify-between px-4 py-3.5 border-b border-zinc-800/60">
-        <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="AI Vivien" className="w-6 h-6 rounded-md object-contain" />
-          <span className="text-sm font-semibold text-zinc-100">AI Vivien</span>
-        </div>
+        <VivienLogo />
         <button
           onClick={() => setCollapsed(true)}
           className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
@@ -435,8 +264,8 @@ export function Sidebar({
       <div className="px-3 py-3 border-b border-zinc-800/60">
         <nav className="space-y-0.5">
           {([
-            { id: 'chat' as const, icon: <MessageSquare size={15} />, label: t.Layout.chats },
-            { id: 'agents' as const, icon: <Bot size={15} />, label: t.Layout.agents },
+            { id: 'chat' as const,   icon: <MessageSquare size={15} />, label: t.Layout.chats },
+            { id: 'agents' as const, icon: <Bot size={15} />,           label: t.Layout.agents },
           ]).map(item => (
             <button
               key={item.id}
@@ -456,7 +285,6 @@ export function Sidebar({
 
       {/* New chat buttons */}
       <div className="px-3 py-3 space-y-1.5">
-        {/* Plain new chat */}
         <button
           onClick={onNewThread}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
@@ -465,7 +293,6 @@ export function Sidebar({
           {t.Layout.newChat}
         </button>
 
-        {/* Template dropdown */}
         <div ref={templateRef} className="relative">
           <button
             onClick={() => setShowTemplates(v => !v)}
@@ -527,14 +354,19 @@ export function Sidebar({
           </div>
         ) : (
           <>
-            <ThreadGroup label={t.Layout.today} items={today} />
+            <ThreadGroup label={t.Layout.today}     items={today} />
             <ThreadGroup label={t.Layout.yesterday} items={yesterday} />
-            <ThreadGroup label={t.Layout.older} items={older} />
+            <ThreadGroup label={t.Layout.older}     items={older} />
           </>
         )}
       </div>
 
-      {/* Footer */}
+      {/* Token meter - Ezt a konténert tettem köré, hogy tuti ne csússzon el */}
+      <div className="px-3 pb-3 pt-2">
+        <TokenMeter onUpgrade={() => onNavigate('pricing')} />
+      </div>
+
+      {/* Footer — user + settings */}
       <div className="border-t border-zinc-800/60 px-3 py-3">
         <button
           onClick={() => onNavigate('settings')}
@@ -544,7 +376,7 @@ export function Sidebar({
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
           }`}
         >
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
             {userName.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 text-left overflow-hidden">

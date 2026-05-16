@@ -16,25 +16,33 @@ import { loadAdminSystemPrompt } from './lib/apiKeysService';
 import type { Database } from './lib/database.types';
 import { Loader2 } from 'lucide-react';
 
-// ÚJ IMPORTOK A CSOMAGVÁLTÁSHOZ ÉS A TOKENEKHEZ
-import { TokenProvider } from './contexts/TokenContext';
+import { TokenProvider, useTokens } from './contexts/TokenContext';
 import { PricingPage } from './pages/PricingPage';
 
-type Page = 'chat' | 'agents' | 'settings' | 'pricing'; // Kiegészítve 'pricing'-al
+type Page = 'chat' | 'agents' | 'settings' | 'pricing';
 type Agent = Database['public']['Tables']['agents']['Row'];
 
-// Task mode instructions injected into the system prompt
 const TASK_MODE_INSTRUCTIONS: Record<string, string> = {
   quick:   '',
   plan:    'Részletes, strukturált, lépésről-lépésre haladó választ adj. Használj számozást és fejezeteket. Minden lépésnél magyarázd el az okát is.',
-  analyze: 'Mélyreható elemzést adj. Vedd figyelembe az összes szempontot, erőket és gyengeségeket egyaránt. Mutass rá rejtett összefüggésekre és lehetőségekre is.',
+  analyze: 'Mélyreható elemzést adj. Vedd figyelembe az összes szempontot, erőket és gyengeségeket egyaránt. Mutass rá rejtett összefüggésre és lehetőségekre is.',
   code:    'Programozási feladatnál dolgozol. Írj tiszta, kommentezett, production-ready kódot. Magyarázd el a logikát, mutasd meg a lehetséges hibákat és alternatív megközelítéseket is. Kódot mindig kódblokk formátumban adj.',
 };
 
-function MainApp() {
-  const { user, loading } = useAuth();
-  const [activePage, setActivePage] = useState<Page>('chat');
-  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+function MainWorkspace() {
+  const { user } = useAuth();
+  const { setAdminMode, addTokens } = useTokens();
+
+  // Az utolsó megtekintett oldal visszaállítása frissítéskor
+  const [activePage, setActivePageState] = useState<Page>(() => {
+    return (localStorage.getItem('vivien_active_page') as Page) || 'chat';
+  });
+
+  // Az utolsó aktív chat visszaállítása frissítéskor
+  const [activeThreadId, setActiveThreadIdState] = useState<string | null>(() => {
+    return localStorage.getItem('vivien_active_thread_id');
+  });
+
   const [isSending, setIsSending] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -49,7 +57,21 @@ function MainApp() {
 
   const activeThread = threads.find(t => t.id === activeThreadId) ?? null;
 
-  // Load admin flag from profiles (is_admin column OR role = 'admin')
+  // Saját mentési burkoló függvények a perzisztenciához
+  const setActivePage = (page: Page) => {
+    setActivePageState(page);
+    localStorage.setItem('vivien_active_page', page);
+  };
+
+  const setActiveThreadId = (id: string | null) => {
+    setActiveThreadIdState(id);
+    if (id) {
+      localStorage.setItem('vivien_active_thread_id', id);
+    } else {
+      localStorage.removeItem('vivien_active_thread_id');
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
     supabase
@@ -58,11 +80,12 @@ function MainApp() {
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
-        if (data?.is_admin || data?.role === 'admin') setIsAdmin(true);
+        const adminStatus = data?.is_admin || data?.role === 'admin';
+        setIsAdmin(adminStatus);
+        setAdminMode(adminStatus); // Ennek a hívásnak a hatására vált át Admin-ra!
       });
-  }, [user]);
+  }, [user, setAdminMode]);
 
-  // Keep aiAvatarUrl in sync with localStorage (set by SettingsPage)
   useEffect(() => {
     const handler = () =>
       setAiAvatarUrl(localStorage.getItem('planlabstudio_ai_avatar_url') ?? '');
@@ -72,7 +95,6 @@ function MainApp() {
 
   const handleNewThread = useCallback(async (agentId?: string) => {
     if (!user) return;
-    // Use first available model based on stored keys; never hardcode gpt-4o-mini
     const googleKey = localStorage.getItem('planlabstudio_key_google');
     const openaiKey = localStorage.getItem('planlabstudio_key_openai');
     const anthropicKey = localStorage.getItem('planlabstudio_key_anthropic');
@@ -117,6 +139,9 @@ function MainApp() {
   const handleSendMessage = useCallback(async (content: string, model: string, attachment?: FileAttachment, taskMode?: string) => {
     if (!user) return;
 
+    const inputTokens = Math.ceil(content.length / 4);
+    addTokens(inputTokens);
+
     let threadId = activeThreadId;
 
     if (!threadId) {
@@ -134,7 +159,6 @@ function MainApp() {
     }
 
     setIsSending(true);
-
     await addMessage(threadId, 'user', content);
 
     const allMessages = [
@@ -142,21 +166,17 @@ function MainApp() {
       { role: 'user' as const, content },
     ];
 
-    // Load and inject global admin system prompt
     const adminSystemPrompt = await loadAdminSystemPrompt();
     const taskInstruction = taskMode ? (TASK_MODE_INSTRUCTIONS[taskMode] ?? '') : '';
-    // Developer info: AI only mentions it when explicitly asked
-    const developerInfo = 'FEJLESZTŐI INFORMÁCIÓ (CSAK AKKOR OSZD MEG, HA VALAKI KIFEJEZETTEN KÉRDEZI): A rendszert Paul Martinez fejlesztette. Ha rákérdeznek a fejlesztőre, a készítőre vagy a rendszer hátterére, akkor és csak akkor említheted meg ezt. Weboldala: www.paulmartinez.hu – ezt mindig sima szövegként írd, SOHA ne kattintható linkként, ne markdown formátumban. Ha senki nem kérdez a fejlesztőről, ezt az információt ne hozd szóba.';
+    const developerInfo = 'FEJLESZTŐI INFORMÁCIÓ (CSAK AKKOR OSZD MEG, HA VALAKI KIFEJEZETTEN KÉRDEZI): A rendszert Paul Martinez fejlesztette. Weboldala: www.paulmartinez.hu';
     const fullSystemPrompt = [adminSystemPrompt, taskInstruction, developerInfo].filter(Boolean).join('\n\n');
     if (fullSystemPrompt) {
       allMessages.unshift({ role: 'system', content: fullSystemPrompt });
     }
 
-    // Also check for agent-specific system prompt (agent takes precedence if both exist)
     const thread = threads.find(t => t.id === threadId);
     const agent = thread?.agent_id ? agents.find(a => a.id === thread.agent_id) : null;
     if (agent?.system_prompt) {
-      // Remove global prompt if agent has its own
       allMessages.splice(0, 1);
       allMessages.unshift({ role: 'system', content: agent.system_prompt });
     }
@@ -167,48 +187,37 @@ function MainApp() {
 
     if (hasApiKey) {
       try {
-        // 1. Show thinking dots (before first chunk arrives)
         setIsThinking(true);
-
         let fullResponse = '';
         let streamingStarted = false;
 
-        // 2. Stream chunks — only create the optimistic bubble on the FIRST chunk
-        //    so there is never an empty bubble alongside the typing indicator
         await callLLMStreaming(allMessages, model || 'gemini-2.5-flash', (chunk) => {
           if (!streamingStarted) {
-            setIsThinking(false);        // hide typing dots
-            beginStreamingMessage();     // create optimistic bubble with first content
+            setIsThinking(false);
+            beginStreamingMessage();
             streamingStarted = true;
           }
           fullResponse += chunk;
           appendToStreamingMessage(chunk);
         }, attachment);
 
-        // 3. Remove the local placeholder
         removeStreamingMessage();
 
-        // 4. Single INSERT with the complete response — this is what persists
         if (fullResponse) {
+          const outputTokens = Math.ceil(fullResponse.length / 4);
+          addTokens(outputTokens);
           await addMessage(threadId, 'assistant', fullResponse);
         }
-
-        // 5. Re-sync from DB to guarantee UI matches what is actually persisted
         await refetchMessages();
       } catch (error) {
         console.error('Streaming error:', error);
         setIsThinking(false);
         removeStreamingMessage();
-        await addMessage(threadId, 'assistant', 'Hiba: nem sikerült a válasz. Ellenőrizd az API kulcsodat a Beállítások > API Kulcsok menüben.');
+        await addMessage(threadId, 'assistant', 'Hiba történt a generálás során.');
         await refetchMessages();
       }
     } else {
-      const demoResponses = [
-        `I received your message: "${content}"\n\nTo enable real AI responses, please add your API key in **Settings > API Keys**.`,
-        `Thank you! This is AI Vivien — your AI workspace.\n\nConfigure your API keys in Settings to unlock real AI capabilities.`,
-        `I'm ready to help! Add your API key in **Settings > API Keys** to start using real AI models.`,
-      ];
-      const reply = demoResponses[Math.floor(Math.random() * demoResponses.length)];
+      const reply = `Kérlek állítsd be az API kulcsodat a Beállításokban!`;
       await addMessage(threadId, 'assistant', reply);
     }
 
@@ -216,23 +225,13 @@ function MainApp() {
     await refetchThreads();
     setIsThinking(false);
     setIsSending(false);
-  }, [user, activeThreadId, threads, messages, agents, createThread, addMessage, beginStreamingMessage, appendToStreamingMessage, removeStreamingMessage, updateThreadTitle, refetchThreads]);
+  }, [user, activeThreadId, threads, messages, agents, createThread, addMessage, beginStreamingMessage, appendToStreamingMessage, removeStreamingMessage, updateThreadTitle, refetchThreads, addTokens]);
 
   const handleChatWithAgent = useCallback(async (agent: Agent) => {
     await handleNewThread(agent.id);
   }, [handleNewThread]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <Loader2 size={28} className="animate-spin text-blue-500" />
-      </div>
-    );
-  }
-
-  if (!user) return <AuthPage />;
-
-  const userName = user.email?.split('@')[0] ?? 'User';
+  const userName = user?.email?.split('@')[0] ?? 'User';
 
   return (
     <div className="flex h-screen bg-zinc-950 overflow-hidden">
@@ -267,7 +266,7 @@ function MainApp() {
         {activePage === 'agents' && (
           <AgentsPage
             agents={agents}
-            userId={user.id}
+            userId={user!.id}
             onCreateAgent={createAgent}
             onUpdateAgent={updateAgent}
             onDeleteAgent={deleteAgent}
@@ -276,12 +275,11 @@ function MainApp() {
         )}
         {activePage === 'settings' && (
           <SettingsPage
-            userEmail={user.email ?? ''}
+            userEmail={user!.email ?? ''}
             userName={userName}
             isAdmin={isAdmin}
           />
         )}
-        {/* ÚJ ÁRAZÁSI/CSOMAGVÁLTÓ OLDAL INTEGRÁCIÓJA */}
         {activePage === 'pricing' && (
           <PricingPage />
         )}
@@ -290,14 +288,31 @@ function MainApp() {
   );
 }
 
+function AppContent() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <Loader2 size={28} className="animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (!user) return <AuthPage />;
+
+  return (
+    <TokenProvider>
+      <MainWorkspace />
+    </TokenProvider>
+  );
+}
+
 function App() {
   return (
     <I18nProvider>
       <AuthProvider>
-        {/* KÖRNYEZET BEÉPÍTÉSE, HOGY A TOKENMETER NE HALJON MEG */}
-        <TokenProvider>
-          <MainApp />
-        </TokenProvider>
+        <AppContent />
       </AuthProvider>
     </I18nProvider>
   );

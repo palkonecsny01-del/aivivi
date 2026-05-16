@@ -1,156 +1,102 @@
-import { useState, FormEvent } from 'react';
-import { Bot, Zap, Shield, Users } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useI18n } from '../i18n';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import { Loader2 } from 'lucide-react';
 
 export function AuthPage() {
   const { signIn, signUp } = useAuth();
-  const { t } = useI18n();
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
     setLoading(true);
-
-    if (mode === 'signin') {
-      const { error } = await signIn(email, password);
-      if (error) setError(error.message);
-    } else {
-      const { error } = await signUp(email, password);
-      if (error) setError(error.message);
-      else setSuccess(mode === 'signin' ? '' : 'Account created! You can now sign in.');
+    setError('');
+    try {
+      if (isSignUp) {
+        await signUp(email, password);
+        alert('Regisztráció sikeres! Kérlek igazold vissza az e-mail címedet.');
+      } else {
+        await signIn(email, password);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Hiba történt a hitelesítés során.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const features = [
-    { icon: <Zap size={18} />, title: t.AuthPage.features.multiModel.title, desc: t.AuthPage.features.multiModel.desc },
-    { icon: <Bot size={18} />, title: t.AuthPage.features.customAgents.title, desc: t.AuthPage.features.customAgents.desc },
-    { icon: <Shield size={18} />, title: t.AuthPage.features.secureByDefault.title, desc: t.AuthPage.features.secureByDefault.desc },
-    { icon: <Users size={18} />, title: t.AuthPage.features.teamCollaboration.title, desc: t.AuthPage.features.teamCollaboration.desc },
-  ];
-
   return (
-    <div className="min-h-screen bg-zinc-950 flex">
-      {/* Left panel with video background */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-zinc-900 border-r border-zinc-800 p-12 relative overflow-hidden">
-        <video
-          autoPlay
-          muted
-          loop
-          className="absolute inset-0 w-full h-full object-cover opacity-20 -z-10"
-        >
-          <source src="/background.mp4" type="video/mp4" />
-        </video>
-        <div>
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
-              <Bot size={20} className="text-white" />
-            </div>
-            <span className="text-xl font-bold text-zinc-100">{t.AuthPage.brandName}</span>
-          </div>
-          <h1 className="text-4xl font-bold text-zinc-100 leading-tight mb-4">
-            {t.AuthPage.headline1}<br />
-            <span className="text-blue-400">{t.AuthPage.headline2}</span>
+    <div className="min-h-screen bg-zinc-950 flex flex-col md:flex-row">
+      {/* Bal oldal: Értékajánlat + VALÓDI LOGO */}
+      <div className="md:w-1/2 bg-zinc-900/30 border-r border-zinc-900 p-8 flex flex-col justify-between">
+        <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="AI Vivien" className="w-8 h-8 object-contain" />
+          <span className="text-base font-black text-zinc-100">AI <span className="text-blue-400">Vivien</span></span>
+        </div>
+
+        <div className="max-w-md space-y-4 my-auto py-12">
+          <h1 className="text-3xl font-black tracking-tight text-zinc-100">
+            A vállalkozásod <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">intelligens motorja.</span>
           </h1>
-          <p className="text-zinc-400 text-lg leading-relaxed">
-            {t.AuthPage.subline}
+          <p className="text-sm text-zinc-400 leading-relaxed">
+            AI Vivien egy professzionális, pszichológia-alapú marketingstratéga, pénzügyi elemző és üzleti asszisztens egyetlen felületen.
           </p>
-        </div>
 
-        <div className="space-y-5">
-          {features.map(item => (
-            <div key={item.title} className="flex items-start gap-4">
-              <div className="w-9 h-9 rounded-lg bg-zinc-800 flex items-center justify-center text-blue-400 shrink-0">
-                {item.icon}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-zinc-200">{item.title}</p>
-                <p className="text-sm text-zinc-500">{item.desc}</p>
-              </div>
+          <div className="space-y-3 pt-4 text-xs text-zinc-400">
+            <div className="flex items-center gap-3">
+              <span className="text-blue-400 font-bold">✦</span>
+              <span>Pszichológiai alapú értékesítési tölcsérek (Funnel) tervezése</span>
             </div>
-          ))}
+            <div className="flex items-center gap-3">
+              <span className="text-blue-400 font-bold">✦</span>
+              <span>Automata piackutatás, versenytárs elemzés és SWOT mátrixok</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-blue-400 font-bold">✦</span>
+              <span>Pénzügyi kimutatások, cash-flow és megtérülés kalkulációk</span>
+            </div>
+          </div>
         </div>
 
-        <p className="text-xs text-zinc-600">&copy; 2026 PlanLabStudio. All rights reserved.</p>
+        <p className="text-[10px] text-zinc-600">© 2026 PlanLabStudio. Minden jog fenntartva.</p>
       </div>
 
-      {/* Right panel */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-sm">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
-              <Bot size={18} className="text-white" />
-            </div>
-            <span className="text-lg font-bold text-zinc-100">{t.AuthPage.brandName}</span>
-          </div>
-
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-zinc-100 mb-1">
-              {mode === 'signin' ? t.AuthPage.welcomeBack : t.AuthPage.createAccount}
-            </h2>
-            <p className="text-sm text-zinc-400">
-              {mode === 'signin'
-                ? t.AuthPage.signInToWorkspace
-                : t.AuthPage.startAIJourney}
-            </p>
+      {/* Jobb oldal */}
+      <div className="md:w-1/2 flex items-center justify-center p-8">
+        <div className="w-full max-w-sm space-y-6">
+          <div>
+            <h2 className="text-xl font-bold text-zinc-100">{isSignUp ? 'Fiók létrehozása' : 'Üdv újra itt'}</h2>
+            <p className="text-xs text-zinc-400 mt-1">Jelentkezz be a privát munkaterületedre.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label={t.AuthPage.email}
-              type="email"
-              placeholder={t.AuthPage.emailPlaceholder}
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-            <Input
-              label={t.AuthPage.password}
-              type="password"
-              placeholder={t.AuthPage.passwordPlaceholder}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            />
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-zinc-400">E-mail cím</label>
+              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-blue-500" placeholder="nev@domain.hu" />
+            </div>
 
-            {error && (
-              <div className="px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-400">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="px-3 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-sm text-emerald-400">
-                {success}
-              </div>
-            )}
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-zinc-400">Jelszó</label>
+              <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:border-blue-500" placeholder="••••••••" />
+            </div>
 
-            <Button type="submit" loading={loading} className="w-full mt-2" size="lg">
-              {mode === 'signin' ? t.Auth.SignIn.signIn : t.Auth.SignUp.createAccount}
-            </Button>
+            {error && <p className="text-xs text-red-400">{error}</p>}
+
+            <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+              {loading && <Loader2 size={12} className="animate-spin" />}
+              {isSignUp ? 'Regisztráció' : 'Bejelentkezés'}
+            </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-zinc-500">
-            {mode === 'signin' ? t.AuthPage.noAccount : t.AuthPage.haveAccount}
-            <button
-              onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setSuccess(''); }}
-              className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
-            >
-              {mode === 'signin' ? t.AuthPage.signUp : t.AuthPage.signIn}
+          <div className="text-center">
+            <button onClick={() => setIsSignUp(!isSignUp)} className="text-xs text-blue-400 hover:underline">
+              {isSignUp ? 'Már van fiókod? Jelentkezz be' : 'Még nincs fiókod? Regisztrálj egyet'}
             </button>
-          </p>
+          </div>
         </div>
       </div>
     </div>
